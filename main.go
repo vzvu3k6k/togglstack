@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"github.com/jason0x43/go-toggl"
 	"os"
+	"strconv"
+	"strings"
 )
 
 func getCurrentTimeEntry(session toggl.Session) toggl.TimeEntry {
@@ -45,12 +47,18 @@ func main() {
 		}
 		session.StopTimeEntry(current_entry)
 
-		idx := strings.LastIndex(current_entry.Description, separator)
-		if idx == -1 {
+		items := strings.Split(current_entry.Description, separator)
+
+		var pop_num uint64 = 1
+		if len(os.Args) >= 2 {
+			pop_num, _ = strconv.ParseUint(os.Args[2], 10, 64)
+		}
+		if uint64(len(items)) <= pop_num || os.Args[2] == "all" {
 			fmt.Println("Done.")
 			return
 		}
-		session.StartTimeEntry(current_entry[0:idx])
+		new_description := strings.Join(items[0:-pop_num], separator)
+		session.StartTimeEntry(new_description)
 		fmt.Printf("Start %s\n", new_description)
 		return
 	}
