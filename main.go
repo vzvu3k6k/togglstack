@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/jason0x43/go-toggl"
+	"math"
 	"os"
 	"strconv"
 	"strings"
@@ -20,46 +21,72 @@ func getCurrentTimeEntry(session toggl.Session) toggl.TimeEntry {
 	return current_entry
 }
 
+func parsePop(args []string) ([]string, bool, int) {
+	if len(args) == 0 || args[0] != "pop" {
+		return args, false, 0
+	}
+	args = args[1:]
+	var pop_num = 1
+	if len(args) >= 1 {
+		if args[0] == "all" {
+			pop_num = math.MaxUint8
+			args = args[1:]
+		} else {
+			_pop_num, err := strconv.ParseUint(args[0], 10, 8)
+			if err == nil {
+				pop_num = int(_pop_num)
+				args = args[1:]
+			}
+		}
+	}
+	return args, true, pop_num
+}
+
+func parsePush(args []string) ([]string, bool, string) {
+	if len(args) < 2 || args[0] != "push" {
+		return args, false, ""
+	}
+	return args[2:], true, args[1]
+}
+
 func main() {
 	const separator = ": "
+	args := os.Args[1:]
+	args2, pop_matched, pop_num := parsePop(args)
+	_, push_matched, new_item := parsePush(args2)
 
 	session := toggl.OpenSession(os.Getenv("TOGGL_TOKEN"))
 	current_entry := getCurrentTimeEntry(session)
 
-	if os.Args[1] == "push" {
+	if (pop_matched && pop_num > 0) || push_matched {
 		if current_entry.IsRunning() {
 			session.StopTimeEntry(current_entry)
+			fmt.Printf("Stop \"%s\"\n", current_entry.Description)
+		} else {
+			if (pop_matched) {
+				fmt.Println("There is no time entry running.")
+			}
 		}
-		new_description := current_entry.Description
-		if new_description != "" {
-			new_description += separator
-		}
-		new_description += os.Args[2]
-		session.StartTimeEntry(new_description)
-		fmt.Printf("Start %s\n", new_description)
-		return
 	}
 
-	if os.Args[1] == "pop" {
-		if !current_entry.IsRunning() {
-			fmt.Println("There is no time entry running.")
-			return
+	var stack []string
+	if current_entry.Description != "" {
+		stack = strings.Split(current_entry.Description, separator)
+		if pop_num > 0 {
+			if pop_num > len(stack) {
+				pop_num = len(stack)
+			}
+			stack = stack[0 : len(stack) - pop_num]
 		}
-		session.StopTimeEntry(current_entry)
-
-		items := strings.Split(current_entry.Description, separator)
-
-		var pop_num uint64 = 1
-		if len(os.Args) >= 2 {
-			pop_num, _ = strconv.ParseUint(os.Args[2], 10, 64)
-		}
-		if uint64(len(items)) <= pop_num || os.Args[2] == "all" {
-			fmt.Println("Done.")
-			return
-		}
-		new_description := strings.Join(items[0:-pop_num], separator)
+	}
+	if push_matched {
+		stack = append(stack, new_item)
+	}
+	if len(stack) > 0 {
+		new_description := strings.Join(stack, separator)
 		session.StartTimeEntry(new_description)
-		fmt.Printf("Start %s\n", new_description)
-		return
+		fmt.Printf("Start \"%s\"\n", new_description)
+	} else {
+		fmt.Println("Empty")
 	}
 }

@@ -14,4 +14,10 @@ $ togglstack pop
 # Working on "Write togglstack".
 $ togglstack push "Option parser"
 # Working on "Write togglstack: Option parser".
+$ togglstack push "Implement roughly"
+# Working on "Write togglstack: Option parser: Implement roughly".
+$ togglstack pop 2 push "Write readme"
+# Working on "Write togglstack: Write readme".
+$ togglstack pop all
+# Empty
 ````
