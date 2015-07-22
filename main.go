@@ -50,7 +50,6 @@ func parsePush(args []string) ([]string, bool, string) {
 }
 
 func main() {
-	const separator = ": "
 	args := os.Args[1:]
 	if len(args) == 0 {
 		fmt.Println("(pop (\\d+|all)?)? (push ...)?") // TODO: better description
@@ -82,6 +81,7 @@ func main() {
 		}
 	}
 
+	const separator = ": "
 	var stack []string
 	if current_entry.Description != "" {
 		stack = strings.Split(current_entry.Description, separator)
