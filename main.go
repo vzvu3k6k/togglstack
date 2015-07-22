@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"github.com/jason0x43/go-toggl"
 	"github.com/typester/go-pit"
@@ -9,6 +10,18 @@ import (
 	"strconv"
 	"strings"
 )
+
+func getTogglToken() (string, error) {
+	profile, err := pit.Get("toggl.com", pit.Requires{"token": ""})
+	if err != nil {
+		return "", err
+	}
+	token := (*profile)["token"]
+	if token == "" {
+		return "", errors.New("Can't get toggl.com token from pit")
+	}
+	return token, nil
+}
 
 func getCurrentTimeEntry(session toggl.Session) toggl.TimeEntry {
 	account, _ := session.GetAccount()
@@ -63,14 +76,9 @@ func main() {
 		return
 	}
 
-	profile, err := pit.Get("toggl.com", pit.Requires{"token": ""})
+	token, err := getTogglToken()
 	if err != nil {
-		fmt.Println("pit.Get failed.")
-		return
-	}
-	token := (*profile)["token"]
-	if token == "" {
-		fmt.Println("Can't get toggl.com token from pit")
+		fmt.Println(err)
 		return
 	}
 	session := toggl.OpenSession(token)
