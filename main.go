@@ -55,7 +55,12 @@ func main() {
 	args2, pop_matched, pop_num := parsePop(args)
 	_, push_matched, new_item := parsePush(args2)
 
-	session := toggl.OpenSession(os.Getenv("TOGGL_TOKEN"))
+	token := os.Getenv("TOGGL_TOKEN")
+	if token == "" {
+		fmt.Println("TOGGL_TOKEN is not found.")
+		return
+	}
+	session := toggl.OpenSession(token)
 	current_entry := getCurrentTimeEntry(session)
 
 	if (pop_matched && pop_num > 0) || push_matched {
