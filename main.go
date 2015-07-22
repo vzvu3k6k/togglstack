@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/jason0x43/go-toggl"
+	"github.com/typester/go-pit"
 	"math"
 	"os"
 	"strconv"
@@ -62,9 +63,14 @@ func main() {
 		return
 	}
 
-	token := os.Getenv("TOGGL_TOKEN")
+	profile, err := pit.Get("toggl.com", pit.Requires{"token": ""})
+	if err != nil {
+		fmt.Println("pit.Get failed.")
+		return
+	}
+	token := (*profile)["token"]
 	if token == "" {
-		fmt.Println("TOGGL_TOKEN is not found.")
+		fmt.Println("Can't get toggl.com token from pit")
 		return
 	}
 	session := toggl.OpenSession(token)
