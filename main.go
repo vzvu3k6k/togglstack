@@ -52,8 +52,16 @@ func parsePush(args []string) ([]string, bool, string) {
 func main() {
 	const separator = ": "
 	args := os.Args[1:]
-	args2, pop_matched, pop_num := parsePop(args)
-	_, push_matched, new_item := parsePush(args2)
+	if len(args) == 0 {
+		fmt.Println("(pop (\\d+|all)?)? (push ...)?") // TODO: better description
+		return
+	}
+	args, pop_matched, pop_num := parsePop(args)
+	args, push_matched, new_item := parsePush(args)
+	if len(args) > 0 {
+		fmt.Printf("Unknown arguments (%s)\n", strings.Join(args, " "))
+		return
+	}
 
 	token := os.Getenv("TOGGL_TOKEN")
 	if token == "" {
