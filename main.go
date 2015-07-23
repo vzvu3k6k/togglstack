@@ -3,7 +3,7 @@ package main
 import (
 	"errors"
 	"fmt"
-	"github.com/jason0x43/go-toggl"
+	"github.com/gedex/go-toggl/toggl"
 	"github.com/typester/go-pit"
 	"math"
 	"os"
@@ -23,16 +23,17 @@ func getTogglToken() (string, error) {
 	return token, nil
 }
 
-func getCurrentTimeEntry(session toggl.Session) toggl.TimeEntry {
-	account, _ := session.GetAccount()
-	var current_entry toggl.TimeEntry
-	for _, v := range(account.Data.TimeEntries) {
-		if v.IsRunning() {
-			current_entry = v
-			break
-		}
+func getCurrentTimeEntry(c *toggl.Client) (*toggl.TimeEntry, error) {
+	u := "time_entries/current"
+	req, err := c.NewRequest("GET", u, nil)
+	if err != nil {
+		return nil, err
 	}
-	return current_entry
+
+	data := new(toggl.TimeEntryResponse)
+	_, err = c.Do(req, data)
+
+	return data.Data, err
 }
 
 func parsePop(args []string) ([]string, bool, int) {
@@ -81,12 +82,16 @@ func main() {
 		fmt.Println(err)
 		return
 	}
-	session := toggl.OpenSession(token)
-	current_entry := getCurrentTimeEntry(session)
+	client := toggl.NewClient(token)
+	current_entry, err := getCurrentTimeEntry(client)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
 
 	if (pop_matched && pop_num > 0) || push_matched {
-		if current_entry.IsRunning() {
-			session.StopTimeEntry(current_entry)
+		if current_entry != nil {
+			client.TimeEntries.Stop(current_entry.ID)
 			fmt.Printf("Stop \"%s\"\n", current_entry.Description)
 		} else {
 			if (pop_matched) {
@@ -97,7 +102,7 @@ func main() {
 
 	const separator = ": "
 	var stack []string
-	if current_entry.Description != "" {
+	if current_entry != nil {
 		stack = strings.Split(current_entry.Description, separator)
 		if pop_num > 0 {
 			if pop_num > len(stack) {
@@ -111,7 +116,16 @@ func main() {
 	}
 	if len(stack) > 0 {
 		new_description := strings.Join(stack, separator)
-		session.StartTimeEntry(new_description)
+		te := &toggl.TimeEntry{
+			CreatedWith: "togglstack",
+			Description: new_description,
+			WorkspaceID: 0,
+		}
+		_, err := client.TimeEntries.Start(te)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
 		fmt.Printf("Start \"%s\"\n", new_description)
 	} else {
 		fmt.Println("Empty")
