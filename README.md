@@ -20,3 +20,7 @@ $ togglstack pop 2 push "Write readme"
 $ togglstack pop all
 # Empty
 ````
+
+## License
+
+CC0
