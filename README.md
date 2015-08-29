@@ -5,7 +5,6 @@ Togglstack is a cli client for toggl with stack-based timetracking, written in G
 ## Usage
 
 ```
-$ export TOGGL_TOKEN="..."
 $ togglstack push "Write togglstack"
 # Working on "Write togglstack".
 $ togglstack push "Find a toggl API library in Go"
