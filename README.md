@@ -1,6 +1,6 @@
 # togglstack
 
-Togglstack is a cli client for toggl with stack-based timetracking, written in Go.
+Togglstack is a CLI client for toggl with stack-based timetracking, written in Go.
 
 ## Usage
 
